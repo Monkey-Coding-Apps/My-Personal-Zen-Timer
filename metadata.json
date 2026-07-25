@@ -1,0 +1,6 @@
+{
+  "name": "My Personal Zen Timer",
+  "description": "A clean, dark-mode meditation timer featuring OLED pure black and ambient backgrounds, procedural Web Audio chimes, interval bells, screen wake lock, and session history.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
