@@ -120,7 +120,7 @@ export const SessionCompletionModal: React.FC<SessionCompletionModalProps> = ({
                 }`}
               >
                 <Check className="w-4 h-4" />
-                Save Note
+                Save Session
               </button>
             </div>
           </form>

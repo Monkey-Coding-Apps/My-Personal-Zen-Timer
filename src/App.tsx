@@ -169,8 +169,6 @@ export default function App() {
         {/* Navbar Header */}
         <Navbar
           onOpenStats={() => setShowStats(true)}
-          volume={volume}
-          onVolumeChange={handleUpdateVolume}
           streak={currentStreak}
           wakeLockActive={isWakeLockSupported()}
           theme={theme}

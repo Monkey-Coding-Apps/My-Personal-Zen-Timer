@@ -1,11 +1,9 @@
 import React from 'react';
-import { History, Volume2, VolumeX, ShieldCheck, Sun, Moon, ExternalLink } from 'lucide-react';
+import { History, ShieldCheck, Sun, Moon, ExternalLink } from 'lucide-react';
 import { ZTLotusLogo } from './ZTLotusLogo';
 
 interface NavbarProps {
   onOpenStats: () => void;
-  volume: number;
-  onVolumeChange: (vol: number) => void;
   streak: number;
   wakeLockActive: boolean;
   theme: 'dark' | 'light';
@@ -14,8 +12,6 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenStats,
-  volume,
-  onVolumeChange,
   streak,
   wakeLockActive,
   theme,
@@ -86,46 +82,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span className={`font-medium ${isDark ? 'text-amber-300' : 'text-amber-600'}`}>{streak}</span>
           <span className={`font-light text-[11px] ${isDark ? 'text-white/50' : 'text-zinc-500'}`}>streak</span>
         </button>
-
-        {/* Volume Control */}
-        <div className="relative group">
-          <button
-            id="volume-toggle-button"
-            className={`px-3 py-1.5 rounded-2xl border backdrop-blur-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
-              isDark
-                ? 'bg-white/5 border-white/10 hover:bg-white/10 text-white/70 hover:text-white'
-                : 'bg-zinc-100/80 border-zinc-200 hover:bg-zinc-200/80 text-zinc-700 hover:text-zinc-900'
-            }`}
-            title="Adjust Master Sound Volume"
-          >
-            {volume === 0 ? (
-              <VolumeX className="w-3.5 h-3.5 text-rose-400" />
-            ) : (
-              <Volume2 className={`w-3.5 h-3.5 ${isDark ? 'text-amber-300' : 'text-amber-600'}`} />
-            )}
-            <span className="font-mono text-[11px]">{Math.round(volume * 100)}%</span>
-          </button>
-          <div
-            className={`absolute left-1/2 -translate-x-1/2 top-full mt-2 w-40 p-3.5 rounded-2xl border shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-30 ${
-              isDark ? 'bg-[#0a0a0c]/95 border-white/15 text-white' : 'bg-white border-zinc-200 text-zinc-900'
-            }`}
-          >
-            <label className={`text-[10px] font-medium uppercase tracking-[0.2em] block mb-2 text-center ${isDark ? 'text-white/40' : 'text-zinc-400'}`}>
-              Volume
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={volume}
-              onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
-              className={`w-full h-1.5 rounded-lg cursor-pointer ${
-                isDark ? 'accent-amber-400 bg-white/10' : 'accent-amber-500 bg-zinc-200'
-              }`}
-            />
-          </div>
-        </div>
 
         {/* Keep Awake indicator */}
         <div
