@@ -1,6 +1,8 @@
-import { SoundType } from '../types';
+import { SoundType, AmbientSoundType } from '../types';
 
 let audioCtx: AudioContext | null = null;
+let currentAmbientStopFn: (() => void) | null = null;
+let cachedNoiseBuffer: AudioBuffer | null = null;
 
 function getAudioContext(): AudioContext {
   if (!audioCtx) {
@@ -253,4 +255,181 @@ function playWoodenBlock(ctx: AudioContext, destination: GainNode, now: number) 
 
   osc.start(now);
   osc.stop(now + 0.3);
+}
+
+function getPinkNoiseBuffer(ctx: AudioContext): AudioBuffer {
+  if (cachedNoiseBuffer && cachedNoiseBuffer.sampleRate === ctx.sampleRate) {
+    return cachedNoiseBuffer;
+  }
+  const duration = 6;
+  const bufferSize = ctx.sampleRate * duration;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+  for (let i = 0; i < bufferSize; i++) {
+    const white = Math.random() * 2 - 1;
+    b0 = 0.99886 * b0 + white * 0.0555179;
+    b1 = 0.99332 * b1 + white * 0.0750759;
+    b2 = 0.96900 * b2 + white * 0.1538520;
+    b3 = 0.86650 * b3 + white * 0.3104856;
+    b4 = 0.55000 * b4 + white * 0.5329522;
+    b5 = -0.7616 * b5 - white * 0.0168980;
+    data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+    b6 = white * 0.115926;
+  }
+  cachedNoiseBuffer = buffer;
+  return buffer;
+}
+
+export function stopAmbientSound() {
+  if (currentAmbientStopFn) {
+    try {
+      currentAmbientStopFn();
+    } catch {
+      // Ignore cleanup error
+    }
+    currentAmbientStopFn = null;
+  }
+}
+
+export function startAmbientSound(type: AmbientSoundType, volume: number = 0.8): () => void {
+  stopAmbientSound();
+
+  if (type === 'none') {
+    return () => {};
+  }
+
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    const noiseBuffer = getPinkNoiseBuffer(ctx);
+
+    const source = ctx.createBufferSource();
+    source.buffer = noiseBuffer;
+    source.loop = true;
+
+    const masterGain = ctx.createGain();
+    const targetVol = Math.max(0.01, Math.min(1, volume));
+
+    // Smooth fade in
+    masterGain.gain.setValueAtTime(0.001, now);
+
+    if (type === 'ocean-waves') {
+      // Filter & LFO modulation for rolling ocean waves
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(320, now);
+
+      const lfo = ctx.createOscillator();
+      lfo.frequency.setValueAtTime(0.12, now); // ~8 sec ocean wave swell
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.setValueAtTime(280, now); // Frequency wobble
+
+      lfo.connect(lfoGain);
+      lfoGain.connect(filter.frequency);
+
+      const lfoVol = ctx.createOscillator();
+      lfoVol.frequency.setValueAtTime(0.12, now);
+      const lfoVolGain = ctx.createGain();
+      lfoVolGain.gain.setValueAtTime(0.18 * targetVol, now);
+
+      masterGain.gain.linearRampToValueAtTime(0.22 * targetVol, now + 1.5);
+
+      source.connect(filter);
+      filter.connect(masterGain);
+      masterGain.connect(ctx.destination);
+
+      lfo.start(now);
+      lfoVol.start(now);
+      source.start(now);
+
+      const stopFn = () => {
+        try {
+          const stopTime = ctx.currentTime;
+          masterGain.gain.setValueAtTime(masterGain.gain.value, stopTime);
+          masterGain.gain.linearRampToValueAtTime(0.0001, stopTime + 0.4);
+          setTimeout(() => {
+            try {
+              source.stop();
+              lfo.stop();
+              lfoVol.stop();
+              source.disconnect();
+              filter.disconnect();
+              masterGain.disconnect();
+            } catch {
+              // Ignore
+            }
+          }, 450);
+        } catch {
+          // Ignore
+        }
+      };
+
+      currentAmbientStopFn = stopFn;
+      return stopFn;
+    } else if (type === 'quiet-rain') {
+      // Filter for soft steady rain + subtle droplet sheen
+      const lowFilter = ctx.createBiquadFilter();
+      lowFilter.type = 'lowpass';
+      lowFilter.frequency.setValueAtTime(900, now);
+
+      const highFilter = ctx.createBiquadFilter();
+      highFilter.type = 'highpass';
+      highFilter.frequency.setValueAtTime(2500, now);
+
+      const highGain = ctx.createGain();
+      highGain.gain.setValueAtTime(0.08, now);
+
+      masterGain.gain.linearRampToValueAtTime(0.2 * targetVol, now + 1.5);
+
+      source.connect(lowFilter);
+      lowFilter.connect(masterGain);
+
+      source.connect(highFilter);
+      highFilter.connect(highGain);
+      highGain.connect(masterGain);
+
+      masterGain.connect(ctx.destination);
+      source.start(now);
+
+      const stopFn = () => {
+        try {
+          const stopTime = ctx.currentTime;
+          masterGain.gain.setValueAtTime(masterGain.gain.value, stopTime);
+          masterGain.gain.linearRampToValueAtTime(0.0001, stopTime + 0.4);
+          setTimeout(() => {
+            try {
+              source.stop();
+              source.disconnect();
+              lowFilter.disconnect();
+              highFilter.disconnect();
+              masterGain.disconnect();
+            } catch {
+              // Ignore
+            }
+          }, 450);
+        } catch {
+          // Ignore
+        }
+      };
+
+      currentAmbientStopFn = stopFn;
+      return stopFn;
+    }
+  } catch (err) {
+    console.warn('Failed to start ambient sound:', err);
+  }
+
+  return () => {};
+}
+
+export function previewAmbientSound(type: AmbientSoundType, volume: number = 0.8) {
+  if (type === 'none') {
+    stopAmbientSound();
+    return;
+  }
+  const stopFn = startAmbientSound(type, volume);
+  setTimeout(() => {
+    stopFn();
+  }, 3500);
 }

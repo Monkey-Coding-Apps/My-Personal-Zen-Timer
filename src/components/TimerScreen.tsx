@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { SoundType, BackgroundType, TimerPhase } from '../types';
-import { playSound, playIntervalChime, playPrepTick } from '../utils/audio';
+import { SoundType, AmbientSoundType, BackgroundType, TimerPhase } from '../types';
+import { playSound, playIntervalChime, playPrepTick, startAmbientSound, stopAmbientSound } from '../utils/audio';
 import { requestWakeLock, releaseWakeLock } from '../utils/wakeLock';
 import { Play, Pause, X, Eye, EyeOff, ShieldCheck, Bell } from 'lucide-react';
 
@@ -8,6 +8,7 @@ interface TimerScreenProps {
   durationMinutes: number;
   intervalMinutes: number;
   sound: SoundType;
+  ambientSound?: AmbientSoundType;
   background: BackgroundType;
   prepDelaySeconds: number;
   volume: number;
@@ -20,6 +21,7 @@ export const TimerScreen: React.FC<TimerScreenProps> = ({
   durationMinutes,
   intervalMinutes,
   sound,
+  ambientSound = 'none',
   background,
   prepDelaySeconds,
   volume,
@@ -89,6 +91,7 @@ export const TimerScreen: React.FC<TimerScreenProps> = ({
 
     if (secondsRemaining <= 0) {
       setPhase('finished');
+      stopAmbientSound();
       playSound(sound, volume);
       releaseWakeLock();
       onFinishSession(totalDurationSeconds);
@@ -120,6 +123,18 @@ export const TimerScreen: React.FC<TimerScreenProps> = ({
 
     return () => clearInterval(timer);
   }, [phase, secondsRemaining, totalDurationSeconds, intervalSeconds, lastIntervalTriggered, sound, volume, onFinishSession]);
+
+  // Background Ambient Sound loop
+  useEffect(() => {
+    if (phase === 'running' && ambientSound && ambientSound !== 'none') {
+      const stopFn = startAmbientSound(ambientSound as AmbientSoundType, volume);
+      return () => {
+        stopFn();
+      };
+    } else {
+      stopAmbientSound();
+    }
+  }, [phase, ambientSound, volume]);
 
   // Breathing pacing loop for breathing-ring background
   useEffect(() => {
@@ -317,7 +332,10 @@ export const TimerScreen: React.FC<TimerScreenProps> = ({
         {/* Cancel / End Button */}
         <button
           id="cancel-session-button"
-          onClick={onCancelSession}
+          onClick={() => {
+            stopAmbientSound();
+            onCancelSession();
+          }}
           className="w-14 h-14 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl hover:bg-white/20 text-white/80 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xl active:scale-95"
           title="End Session"
         >

@@ -1,11 +1,12 @@
 import React from 'react';
-import { Preset, SoundType, BackgroundType } from '../types';
-import { Play, Bell, Volume2, Sparkles, Moon, Sun, Trees, Stars, Activity } from 'lucide-react';
+import { Preset, SoundType, AmbientSoundType, BackgroundType } from '../types';
+import { Play, Bell, Volume2, VolumeX, Waves, CloudRain, Sparkles, Moon, Sun, Trees, Stars, Activity } from 'lucide-react';
 
 interface QuickPresetsProps {
   presets: Preset[];
   onSelectPreset: (preset: Preset) => void;
   onPreviewSound: (sound: SoundType) => void;
+  onPreviewAmbient?: (ambient: AmbientSoundType) => void;
   theme?: 'dark' | 'light';
 }
 
@@ -13,6 +14,7 @@ export const QuickPresets: React.FC<QuickPresetsProps> = ({
   presets,
   onSelectPreset,
   onPreviewSound,
+  onPreviewAmbient,
   theme = 'dark',
 }) => {
   const isDark = theme === 'dark';
@@ -44,6 +46,28 @@ export const QuickPresets: React.FC<QuickPresetsProps> = ({
         return 'Gentle Chime';
       case 'wooden-block':
         return 'Wooden Block';
+    }
+  };
+
+  const getAmbientIcon = (ambient: AmbientSoundType) => {
+    switch (ambient) {
+      case 'none':
+        return <VolumeX className={`w-3.5 h-3.5 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`} />;
+      case 'ocean-waves':
+        return <Waves className={`w-3.5 h-3.5 ${isDark ? 'text-cyan-300' : 'text-cyan-600'}`} />;
+      case 'quiet-rain':
+        return <CloudRain className={`w-3.5 h-3.5 ${isDark ? 'text-sky-300' : 'text-sky-600'}`} />;
+    }
+  };
+
+  const getAmbientLabel = (ambient: AmbientSoundType) => {
+    switch (ambient) {
+      case 'none':
+        return 'No Sound';
+      case 'ocean-waves':
+        return 'Ocean Waves';
+      case 'quiet-rain':
+        return 'Quiet Rain';
     }
   };
 
@@ -123,6 +147,24 @@ export const QuickPresets: React.FC<QuickPresetsProps> = ({
                   {getBgIcon(preset.background)}
                   <span className="capitalize">{preset.background.replace('-', ' ')}</span>
                 </span>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onPreviewAmbient && preset.ambientSound !== 'none') {
+                      onPreviewAmbient(preset.ambientSound);
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-colors ${
+                    preset.ambientSound !== 'none' && onPreviewAmbient ? 'cursor-pointer hover:bg-white/10' : ''
+                  } ${
+                    isDark ? 'bg-white/5 border-white/10' : 'bg-zinc-100 border-zinc-200 text-zinc-700'
+                  }`}
+                  title={preset.ambientSound !== 'none' ? 'Click to preview background sound' : 'Background Sound'}
+                >
+                  {getAmbientIcon(preset.ambientSound)}
+                  <span>{getAmbientLabel(preset.ambientSound)}</span>
+                </button>
 
                 <button
                   onClick={(e) => {

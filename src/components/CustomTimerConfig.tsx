@@ -1,7 +1,7 @@
 import React from 'react';
 import { CustomTimerConfig as ConfigType } from '../utils/storage';
-import { SoundType, BackgroundType } from '../types';
-import { Clock, Bell, Volume2, Palette, Play, Sliders, Moon, Sun, Trees, Stars, Activity, Info } from 'lucide-react';
+import { SoundType, AmbientSoundType, BackgroundType } from '../types';
+import { Clock, Bell, Volume2, Waves, CloudRain, VolumeX, Palette, Play, Sliders, Moon, Sun, Trees, Stars, Activity, Info } from 'lucide-react';
 
 interface CustomTimerConfigProps {
   config: ConfigType;
@@ -9,6 +9,7 @@ interface CustomTimerConfigProps {
   onChangeConfig: (newConfig: ConfigType) => void;
   onChangePrepDelay: (delaySeconds: number) => void;
   onPreviewSound: (sound: SoundType) => void;
+  onPreviewAmbient?: (ambient: AmbientSoundType) => void;
   onStartCustom: () => void;
   theme?: 'dark' | 'light';
 }
@@ -19,6 +20,7 @@ export const CustomTimerConfig: React.FC<CustomTimerConfigProps> = ({
   onChangeConfig,
   onChangePrepDelay,
   onPreviewSound,
+  onPreviewAmbient,
   onStartCustom,
   theme = 'dark',
 }) => {
@@ -165,7 +167,7 @@ export const CustomTimerConfig: React.FC<CustomTimerConfigProps> = ({
               <div className="flex items-center justify-between mb-2.5">
                 <label className={`text-xs font-light uppercase tracking-[0.2em] flex items-center gap-1.5 ${isDark ? 'text-white/60' : 'text-zinc-700'}`}>
                   <Volume2 className={`w-4 h-4 ${isDark ? 'text-amber-300' : 'text-amber-600'}`} />
-                  Ending Sound
+                  Ending Chime
                 </label>
                 <button
                   type="button"
@@ -197,6 +199,56 @@ export const CustomTimerConfig: React.FC<CustomTimerConfigProps> = ({
                 <option value="gentle-chime">Gentle Chime (Soft Triple Arpeggio)</option>
                 <option value="wooden-block">Wooden Block (Warm Hollow Wood Pop)</option>
               </select>
+            </div>
+
+            {/* Background Sound Selector */}
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <label className={`text-xs font-light uppercase tracking-[0.2em] flex items-center gap-1.5 ${isDark ? 'text-white/60' : 'text-zinc-700'}`}>
+                  <Waves className={`w-4 h-4 ${isDark ? 'text-cyan-300' : 'text-cyan-600'}`} />
+                  Background Sound
+                </label>
+                {config.ambientSound !== 'none' && onPreviewAmbient && (
+                  <button
+                    type="button"
+                    id="preview-ambient-button"
+                    onClick={() => onPreviewAmbient(config.ambientSound)}
+                    className={`px-3 py-1 rounded-full border text-[11px] flex items-center gap-1 transition-all cursor-pointer ${
+                      isDark
+                        ? 'bg-white/5 border-white/10 hover:bg-white/10 text-cyan-300'
+                        : 'bg-cyan-50 border-cyan-200 hover:bg-cyan-100 text-cyan-700 font-medium'
+                    }`}
+                  >
+                    <Waves className="w-3 h-3" />
+                    Listen Preview
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'none', label: 'No Sound', icon: <VolumeX className="w-3.5 h-3.5" /> },
+                  { id: 'ocean-waves', label: 'Ocean Waves', icon: <Waves className="w-3.5 h-3.5 text-cyan-400" /> },
+                  { id: 'quiet-rain', label: 'Quiet Rain', icon: <CloudRain className="w-3.5 h-3.5 text-sky-400" /> },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => onChangeConfig({ ...config, ambientSound: item.id as AmbientSoundType })}
+                    className={`py-3 px-2 rounded-2xl border text-xs flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                      config.ambientSound === item.id
+                        ? isDark
+                          ? 'bg-white/15 border-white/40 text-white font-medium shadow-md'
+                          : 'bg-amber-500/10 border-amber-500/40 text-amber-900 font-semibold shadow-sm'
+                        : isDark
+                        ? 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                        : 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100'
+                    }`}
+                  >
+                    {item.icon}
+                    <span className="text-[11px]">{item.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Background Visual Theme */}

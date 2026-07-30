@@ -1,4 +1,4 @@
-import { SessionRecord, SoundType, BackgroundType } from '../types';
+import { SessionRecord, SoundType, AmbientSoundType, BackgroundType } from '../types';
 
 const STORAGE_KEYS = {
   SESSIONS: 'zentimer_sessions',
@@ -11,6 +11,7 @@ export interface CustomTimerConfig {
   durationMinutes: number;
   intervalMinutes: number;
   sound: SoundType;
+  ambientSound: AmbientSoundType;
   background: BackgroundType;
 }
 
@@ -44,7 +45,17 @@ export function saveSession(record: Omit<SessionRecord, 'id' | 'timestamp'>): Se
 export function getSavedCustomConfig(): CustomTimerConfig {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.CUSTOM_CONFIG);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        durationMinutes: 10,
+        intervalMinutes: 0,
+        sound: 'singing-bowl',
+        ambientSound: 'none',
+        background: 'oled-black',
+        ...parsed,
+      };
+    }
   } catch (err) {
     console.warn('Failed to parse custom config:', err);
   }
@@ -52,6 +63,7 @@ export function getSavedCustomConfig(): CustomTimerConfig {
     durationMinutes: 10,
     intervalMinutes: 0,
     sound: 'singing-bowl',
+    ambientSound: 'none',
     background: 'oled-black',
   };
 }

@@ -6,7 +6,7 @@ import { TimerScreen } from './components/TimerScreen';
 import { SessionCompletionModal } from './components/SessionCompletionModal';
 import { StatsModal } from './components/StatsModal';
 import { DEFAULT_PRESETS } from './data/presets';
-import { Preset, SoundType, SessionRecord } from './types';
+import { Preset, SoundType, AmbientSoundType, SessionRecord } from './types';
 import {
   getSavedSessions,
   saveSession,
@@ -19,7 +19,7 @@ import {
   calculateStats,
   CustomTimerConfig as ConfigType,
 } from './utils/storage';
-import { playSound } from './utils/audio';
+import { playSound, previewAmbientSound } from './utils/audio';
 import { isWakeLockSupported } from './utils/wakeLock';
 import { BellOff, Sparkles, HeartHandshake, Sliders } from 'lucide-react';
 
@@ -44,6 +44,7 @@ export default function App() {
     durationMinutes: number;
     intervalMinutes: number;
     sound: SoundType;
+    ambientSound: AmbientSoundType;
     background: ConfigType['background'];
     presetTitle?: string;
   } | null>(null);
@@ -84,11 +85,16 @@ export default function App() {
     playSound(sound, volume);
   };
 
+  const handlePreviewAmbient = (ambient: AmbientSoundType) => {
+    previewAmbientSound(ambient, volume);
+  };
+
   const handleSelectPreset = (preset: Preset) => {
     setActiveTimer({
       durationMinutes: preset.durationMinutes,
       intervalMinutes: preset.intervalMinutes,
       sound: preset.sound,
+      ambientSound: preset.ambientSound,
       background: preset.background,
       presetTitle: preset.title,
     });
@@ -99,6 +105,7 @@ export default function App() {
       durationMinutes: customConfig.durationMinutes,
       intervalMinutes: customConfig.intervalMinutes,
       sound: customConfig.sound,
+      ambientSound: customConfig.ambientSound,
       background: customConfig.background,
       presetTitle: 'Custom Meditation',
     });
@@ -254,6 +261,7 @@ export default function App() {
               presets={DEFAULT_PRESETS}
               onSelectPreset={handleSelectPreset}
               onPreviewSound={handlePreviewSound}
+              onPreviewAmbient={handlePreviewAmbient}
               theme={theme}
             />
           ) : (
@@ -263,6 +271,7 @@ export default function App() {
               onChangeConfig={handleUpdateCustomConfig}
               onChangePrepDelay={handleUpdatePrepDelay}
               onPreviewSound={handlePreviewSound}
+              onPreviewAmbient={handlePreviewAmbient}
               onStartCustom={handleStartCustom}
               theme={theme}
             />
@@ -293,6 +302,7 @@ export default function App() {
           durationMinutes={activeTimer.durationMinutes}
           intervalMinutes={activeTimer.intervalMinutes}
           sound={activeTimer.sound}
+          ambientSound={activeTimer.ambientSound}
           background={activeTimer.background}
           prepDelaySeconds={prepDelay}
           volume={volume}

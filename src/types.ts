@@ -1,5 +1,7 @@
 export type SoundType = 'singing-bowl' | 'brass-gong' | 'temple-bell' | 'gentle-chime' | 'wooden-block';
 
+export type AmbientSoundType = 'none' | 'ocean-waves' | 'quiet-rain';
+
 export type BackgroundType = 'oled-black' | 'sunrise-gradient' | 'misty-forest' | 'night-sky' | 'breathing-ring';
 
 export interface Preset {
@@ -8,6 +10,7 @@ export interface Preset {
   durationMinutes: number;
   intervalMinutes: number; // 0 for off
   sound: SoundType;
+  ambientSound: AmbientSoundType;
   background: BackgroundType;
   description: string;
   accentColor: string;
